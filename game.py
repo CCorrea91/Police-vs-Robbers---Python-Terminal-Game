@@ -6,7 +6,7 @@ import os
 def print_slow(text):
     message = ""
     for letter in text:
-        time.sleep(0.03)
+        time.sleep(0.001)
         print(letter, end = "", flush = True)
 
 
@@ -35,7 +35,7 @@ class Player:
 
     def roll_dice(self):
         die = ["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟"]
-        result = random.randint(8, 9)
+        result = random.randint(0, 9)
         for i in range(10):
             face = random.choice(die)
             print('\r' + face, end='')
@@ -46,9 +46,10 @@ class Player:
 
     def move(self):
         distance = self.roll_dice()
-        self.distance += distance
-        self.energy.pop()
-        if len(self.energy) > 0:
+        if "⚡" in self.energy:
+            self.distance += distance
+            self.energy.remove("⚡")
+            self.energy.append("  ")
             print_slow("You moved " + str(distance) + " steps!\n")
         else:
             print_slow("I'm too tired to move, I better take cover...")
@@ -56,26 +57,36 @@ class Player:
         time.sleep(1)
 
     def shoot(self, target):
-        self.ammo.pop()
-        if len(self.ammo) > 0:
-            if self.roll_dice() > 6:
-                target.health.pop()
+        if "💥" in self.ammo:
+            self.ammo.remove("💥")
+            self.ammo.append("  ")
+            if self.roll_dice() > 5:
+                target.health.remove("💛")
+                target.health.append("  ")
                 print("\nBANG! 💥")
-                print("IT'S A HIT!")
+                print("\nIT'S A HIT!")
             else:
                 print("\nYOU MISSED!")
         else:
-            print_slow("I have no ammo! I'll take cover!")
+            print_slow("\nI have no ammo! I'll take cover!")
             self.take_cover()
         time.sleep(1)
 
     def take_cover(self):
-        print("*You take cover")
-        while len(self.ammo) < 5:
-            self.ammo += "💥"
-        while len(self.energy) < 5:
-            self.energy += "⚡"
-        time.sleep(1)
+        print("\n*You take cover*")
+        if "💥" * 5 not in self.ammo:
+            for i in range(len(self.ammo)):
+                self.ammo.pop()
+            while len(self.ammo) < 5:
+                    self.ammo += "💥"
+        if "⚡" * 5 not in self.energy:
+            for i in range(len(self.energy)):
+                self.energy.pop()
+            while len(self.energy) < 5:
+                self.energy += "⚡"
+        # while len(self.energy) < 5:
+        #     self.energy += "⚡"
+        # time.sleep(1)
 
 
 
@@ -84,6 +95,25 @@ class Player:
 
 players = []
 
+
+def game_over(player):
+    loser = police if player.occupation == "robber" else robber
+
+    if player.occupation == "police":
+        if "💛" not in loser.health:
+            print("\nOfficer {} killed Robber {}! \nYou recovered all the money!".format(
+                player.name, loser.name))
+        else:
+            print("\nOfficer {} caught the Robber {}!\nYou are going to jail, punk!".format(player.name, loser.name))
+    else:
+        if "💛" not in loser.health:
+            print("\Robber {} killed Officer {} \nYou got away with the money!".format(
+                player.name, loser.name))
+        else:
+            print("\Robber {} has escaped from Officer {} \nYou got away with the money!".format(
+                player.name, loser.name))
+    print("\n\n\nGAME OVER")
+    input()
 
 def intro_scene():
     print_slow(
@@ -99,77 +129,113 @@ def intro_scene():
     time.sleep(2)
     os.system("cls")
 
+def player_info():
 
-def player_info(player, target):
+    target = robber
+    player = police
 
-    print_slow(("\nIt's " + str(player.name) + "'s turn\n").upper())
-    print("\nHealth: ", (' '.join(map(str, player.health))), "\nAmmo: ",
-          (' '.join(map(str, player.ammo))), "\nEnergy: ", (' '.join(map(str, player.energy))))
-    if player.occupation == "police":
-        total_distance = target.distance + 20 - player.distance
-        print("\nDistance to robber: ", total_distance)
-        return total_distance
-    else:
-        total_distance = player.distance + 20 - target.distance
-        print("\nDistance from police: ", total_distance)
-        return total_distance
 
+    player_health = " ".join(player.health)
+    player_ammo = " ".join(player.ammo)
+    player_energy = " ".join(player.energy)
+    target_health = " ".join(target.health)
+    target_ammo = " ".join(target.ammo)
+    target_energy = " ".join(target.energy)
+    print("""
+                    Officer {player}'s Stats       VS      Robber {target}'s Stats
+            ———————————————————————————————————————————————————————————————————————
+            Health |{player_health}                       {target_health}
+            Ammo   |{player_ammo}                       {target_ammo}
+            Energy |{player_energy}                       {target_energy}
+          """.ljust(500, " ").format(
+        player = player.name,
+        player_health = player_health, 
+        player_ammo = player_ammo, 
+        player_energy = player_energy,
+        target = target.name,
+        target_health = target_health,
+        target_ammo = target_ammo,
+        target_energy = target_energy
+        ))
+    
+def player_distance():
+    starting_distance = 25
+    player_distance = starting_distance + robber.distance - police.distance
+    return player_distance
 
 def make_decision(player, target):
-    print_slow(
-        "\nWhat will you do now?\n1. Move 🏃‍♂️\n2. Shoot 💥\n3. Take Cover 🛡\n"
-    )
-    decision = input("Enter answer: ")
-    if decision == "1":
-        if len(player.energy) > 0:
-            message = random.choice(player.messages[player.occupation]["move"])
-            time.sleep(1)
+    target = robber if player.occupation == "police" else police
+    if len(player.health) > 0 and len(target.health) > 0:
+        player_info()
+        print(
+            """
+            What will you do next?
+
+            1. Move
+            2. Shoot
+            3. Cover
+
+            Type "1", "2" or "3"
+            """
+        )
+
+        decision = input("Enter choice: ")
+
+        if decision == "1":
+            if player.occupation == "police":
+                print("Officer {player} chose to chase Robber {target}".format(player = player.name, target = target.name))
+            else:
+                print("Robber {player} chose to escape from Officer {target}".format(
+                    player=player.name, target=target.name))
             player.move()
-        else:
-            message = "I'm too tired to move!"
-    elif decision == "2":
-        if len(player.ammo) > 0:
-            message = random.choice(
-                player.messages[player.occupation]["shoot"])
-            time.sleep(1)
+            print(random.choice(player.messages[player.occupation]["move"]))
+
+        elif decision == "2":     
+            if player.occupation == "police":
+                print("Officer {player} chose to shoot Robber {target}".format(
+                    player=player.name, target=target.name))
+            else:
+                print("Robber {player} chose to shoot Officer {target}".format(
+                    player=player.name, target=target.name))
+            print(random.choice(player.messages[player.occupation]["shoot"]))
             player.shoot(target)
+
+        elif decision == "3":
+            if player.occupation == "police":
+                print("Officer {player} chose to cover from Robber {target}".format(
+                    player=player.name, target=target.name))
+            else:
+                print("Robber {player} chose to cover from Officer {target}".format(
+                    player=player.name, target=target.name))
+            player.take_cover()
+            print(random.choice(player.messages[player.occupation]["cover"]))
+
         else:
-            message = "Out of ammo!"
-    elif decision == "3":
-        message = random.choice(
-            player.messages[player.occupation]["cover"])
-        time.sleep(1)
-        player.take_cover()
-    else: 
-        print_slow("\nPlease select a valid option.\n Type either 1, 2 or 3")
-        make_decision(player, target)
-    print(str(player.name).upper() + " SAYS: " + str(message).upper())
-    time.sleep(2)
-    os.system("cls")
+            print("Please type either \"1\", \"2\" or \"3\"")
+            make_decision(player, target)
+    return player
 
 
-def game_logic():
-    while len(police.health) > 0 and len(robber.health) > 0 and 1 <= player_info(player, target).total_distance <= 50:
+def game_logic(player):
+    target = robber if player.occupation == "police" else police
+    distance = player_distance()
+    while "💛" in player.health and "💛" in target.health:
         for player in players:
-            target = None
-            for p in players:
-                if p != player:
-                    target = p
-                    break
-            while len(player.health) > 0:
-                player_info(player, target)
-                make_decision(player, target)
-                break
-
-def game_over():
-    print("\nThe game has ended")
+            if "💛" in player.health and 0 < distance < 50:
+                print("—" * 40)
+                print("It's "+ player.name + "'s Turn")
+                print("—" * 40)
+                print("Distance between players: ", distance)
+                print("{}'s travelled distance: ".format(player.name), player.distance)
+                winner = make_decision(player, target)
+                distance = player_distance()
+                time.sleep(2)
+                os.system("cls")
+            elif 0 >= distance or distance >= 50 or "💛" not in player.health:
+                    game_over(winner)
+                    return
 
 intro_scene()
-
 police = players[0]
 robber = players[1]
-
-game_logic()
-game_over()
-
-
+game_logic(police)
