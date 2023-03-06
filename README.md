@@ -1,4 +1,4 @@
-# Python Terminal Game
+# Police vs Robbers - Python Terminal Game
 The project is a simple command-line based game that involves a police officer trying to catch a robber who has stolen money. The game requires the user to input commands to move, take cover or shoot at the robber. The project is written in Python and uses the random, time, and os modules.
 
 ## How to Play
