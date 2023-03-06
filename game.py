@@ -90,9 +90,6 @@ class Player:
                 self.energy.pop()
             while len(self.energy) < 5:
                 self.energy += "🗲"
-        # while len(self.energy) < 5:
-        #     self.energy += "🗲"
-        # time.sleep(1)
 
 
 
@@ -105,7 +102,7 @@ players = []
 def print_slow(text):
     message = ""
     for letter in text:
-        time.sleep(0.01)
+        time.sleep(0.02)
         print(letter, end="", flush=True)
         
 #Game Over logic
@@ -133,12 +130,12 @@ def game_over(player):
 def intro_scene():
     print_slow(
         "We have a fugitive on the run!\nWe need an officer in the area.\nReport for duty and state your name!\n")
-    police = Player(input("Enter your name: "), "police")
+    police = Player(input("Player 1 enter your name: "), "police")
     players.append(police)
     print_slow(
         "\nOk Officer {}, you are now officially on pursuit!\n".format(police.name))
     print_slow("The perp you are trying to catch is called...\n")
-    robber = Player(input("Enter your name: "), "robber")
+    robber = Player(input("Player 1 enter your name: "), "robber")
     players.append(robber)
     print_slow("\n{} has stolen a bunch of stuff,\nso you better catch them,\nbefore they steal more stuff I guess...\n".format(robber.name))
     time.sleep(2)
@@ -252,7 +249,7 @@ def game_logic(player):
                 print("—" * 40)
                 print("It's "+ player.name + "'s Turn")
                 print("—" * 40)
-                print("Distance between players: ", distance)
+                print("Distance between players:", distance, "steps")
                 print("{}'s travelled distance: ".format(player.name), player.distance)
                 winner = make_decision(player, target)
                 distance = player_distance()
